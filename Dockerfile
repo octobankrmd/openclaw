@@ -1,20 +1,25 @@
-FROM node:20-slim
+FROM node:20-bullseye-slim
 
 WORKDIR /app
 
-# Устанавливаем зависимости для работы системы
+# Устанавливаем только самое необходимое
 RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
 
+# Копируем файлы зависимостей
 COPY package*.json ./
-RUN npm install
 
+# Используем флаг --omit=dev, чтобы не тянуть лишний мусор, и --no-audit для скорости
+RUN npm install --omit=dev --no-audit
+
+# Копируем остальной код
 COPY . .
 
-# Указываем переменные окружения прямо тут на всякий случай
+# Переменные окружения
 ENV PORT=3000
 ENV OPENCLAW_ALLOW_ROOT=true
+ENV NODE_ENV=production
 
 EXPOSE 3000
 
-# Запускаем напрямую через ноду, минуя капризные скрипты
+# Самый простой запуск
 CMD ["node", "scripts/run-node.mjs", "--allow-root"]
