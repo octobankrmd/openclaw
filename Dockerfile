@@ -1,18 +1,16 @@
-FROM node:20-bullseye-slim
+# Используем Node.js 22, так как проект требует свежую версию
+FROM node:22-bookworm-slim
 
 WORKDIR /app
 
-# Устанавливаем только самое необходимое
-RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
+# Устанавливаем системные зависимости
+RUN apt-get update && apt-get install -y python3 make g++ git && rm -rf /var/lib/apt/lists/*
 
-# Копируем файлы зависимостей
-COPY package*.json ./
-
-# Используем флаг --omit=dev, чтобы не тянуть лишний мусор, и --no-audit для скорости
-RUN npm install --omit=dev --no-audit
-
-# Копируем остальной код
+# Сначала копируем ВЕСЬ проект (чтобы скрипты preinstall были на месте)
 COPY . .
+
+# Теперь запускаем установку, игнорируя предупреждения о версиях
+RUN npm install --omit=dev --no-audit --ignore-scripts
 
 # Переменные окружения
 ENV PORT=3000
@@ -21,5 +19,5 @@ ENV NODE_ENV=production
 
 EXPOSE 3000
 
-# Самый простой запуск
+# Запуск
 CMD ["node", "scripts/run-node.mjs", "--allow-root"]
